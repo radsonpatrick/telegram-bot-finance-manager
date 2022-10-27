@@ -1,3 +1,4 @@
 .env
 .tokens
-./teste.py
+teste.py
+bot.db

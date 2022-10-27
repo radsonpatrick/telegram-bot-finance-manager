@@ -41,8 +41,8 @@ print("------------BOT INICIADO------------")
 con = sqlite3.connect("./bot.db" ,check_same_thread=False)
 db = con.cursor()
 #db.execute("DROP TABLE bot")
-db.execute("CREATE TABLE IF NOT EXISTS bot(id_chat,conta,saldo_inicial,date_log)")
-db.execute("CREATE TABLE IF NOT EXISTS registros(id_chat,conta,descricao,valor,date_log)")
+db.execute("CREATE TABLE IF NOT EXISTS account(id_chat,conta,saldo_inicial,date_log)")
+db.execute("CREATE TABLE IF NOT EXISTS register(id_chat,conta,descricao,valor,date_log)")
 
 def insert_db(table,*args):
     print('-'*50+'INSERT IN DB'+'-'*50)
@@ -77,7 +77,7 @@ def validation_number(mensagem) :
 def contas_keyboard() :
     global keyboard_contas,contas_list
     
-    contas = read_db('bot','conta')
+    contas = read_db('account','conta')
     contas_list=[]
     keyboard_contas = ReplyKeyboardMarkup(resize_keyboard = True, one_time_keyboard= True)
     for conta in contas:
@@ -95,7 +95,7 @@ def description_func(mensagem) :
         chat_id = mensagem.chat.id
         desc = mensagem.text
         date = mensagem.date
-        insert_db('registros',chat_id,conta,desc,valor,date)
+        insert_db('register',chat_id,conta,desc,valor,date)
 
 
 @bot.message_handler(func=description_func)
@@ -165,7 +165,7 @@ def account_saldo(mensagem) :
             date = mensagem.date
             conta_saldo = mensagem.text
             bot.send_message(mensagem.chat.id,f"""seu saldo na {nome_conta} é de {conta_saldo} R$!""")
-            insert_db('bot',chat_id,nome_conta,conta_saldo,date)
+            insert_db('account',chat_id,nome_conta,conta_saldo,date)
 
             return True
        else :
