@@ -38,6 +38,12 @@ db = con.cursor()
 db.execute("CREATE TABLE IF NOT EXISTS account(id_chat,conta,saldo_inicial,date_log)")
 db.execute("CREATE TABLE IF NOT EXISTS register(id_chat,conta,type,descricao,valor,date_log)")
 
+def update_contas() :
+    global contas 
+    contas = []
+    for conta in read_db('account','conta'):
+        contas.append(conta[0])
+    
 def insert_db(table,*args):
     print('-'*50+'INSERT IN DB'+'-'*50)
     print(f"""INSERT INTO {table} VALUES {args}""")
@@ -60,8 +66,9 @@ def print_db(table,columns = '*') :
     
 
 def keyboard_main() :
-    global contas 
-    contas = read_db('account','conta')
+    global contas
+    update_contas()
+
     if len(contas) > 0 :
         keyboard_general =  ReplyKeyboardMarkup(resize_keyboard = True, one_time_keyboard= True)\
                                         .add(KeyboardButton('Registrar uma Despesa'))\
@@ -200,8 +207,8 @@ def account_saldo(mensagem) :
             chat_id = mensagem.chat.id
             date = mensagem.date
             conta_saldo = mensagem.text
-            bot.send_message(mensagem.chat.id,f"""seu saldo na {nome_conta} é de {conta_saldo} R$!""")
             insert_db('account',chat_id,nome_conta,conta_saldo,date)
+            bot.send_message(mensagem.chat.id,f"""seu saldo na {nome_conta} é de {conta_saldo} R$!""",reply_markup = keyboard_main())
 
             return True
        else :
@@ -214,14 +221,19 @@ def account_saldo(mensagem) :
     ######################
 
 def account_verificar(mensagem) :
-    global page,nome_conta
-    if page == 'home/conta' :
+    global page,nome_conta,contas
+    if page == 'home/conta'  :
         nome_conta = mensagem.text  
-        page = 'home/conta/name'
-        print(nome_conta)
-        bot.reply_to(mensagem,f"""Qual o Saldo da conta {nome_conta}?""")
-        return True
-
+        update_contas()
+        print(contas)
+        if nome_conta not in contas :
+            page = 'home/conta/name'
+            print(nome_conta)
+            bot.reply_to(mensagem,f"""Qual o Saldo da conta {nome_conta}?""")
+            return True
+        else: 
+            bot.reply_to(mensagem,"Conta já existe")
+            page = 'home'
 @bot.message_handler(func=account_verificar)
 
 ####
