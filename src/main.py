@@ -42,7 +42,7 @@ con = sqlite3.connect("./bot.db" ,check_same_thread=False)
 db = con.cursor()
 #db.execute("DROP TABLE bot")
 db.execute("CREATE TABLE IF NOT EXISTS account(id_chat,conta,saldo_inicial,date_log)")
-db.execute("CREATE TABLE IF NOT EXISTS register(id_chat,conta,descricao,valor,date_log)")
+db.execute("CREATE TABLE IF NOT EXISTS register(id_chat,conta,type,descricao,valor,date_log)")
 
 def insert_db(table,*args):
     print('-'*50+'INSERT IN DB'+'-'*50)
@@ -85,17 +85,20 @@ def contas_keyboard() :
         contas_list.append(conta[0])
     print(contas_list)
 
-##################### expenseive ################################################
+##################### Register ################################################
 
 def description_func(mensagem) :
-    global page,description,valor,conta
-    if page == 'home/despesa/conta/description':
-        bot.reply_to(mensagem,"Obrigado ! Despesa Registrada! ✅✅✅")
+    global page,description,valor,conta,type
+    if page == 'home/register/account/description':
+        if type == 'income' :
+            bot.reply_to(mensagem,"Obrigado !\n ✅✅✅ Receita Registrada! ✅✅✅")
+        else:
+            bot.reply_to(mensagem,"Obrigado !\n ✅✅✅ Despesa Registrada! ✅✅✅")
         page = "home"
         chat_id = mensagem.chat.id
         desc = mensagem.text
         date = mensagem.date
-        insert_db('register',chat_id,conta,desc,valor,date)
+        insert_db('register',chat_id,conta,type,desc,valor,date)
 
 
 @bot.message_handler(func=description_func)
@@ -103,14 +106,14 @@ def description_func(mensagem) :
 #####################################################################
 def despesa(mensagem) :
     global page,valor
-    if page == 'home/despesa/conta':
+    if page == 'home/register/account':
         if validation_number(mensagem) : 
-            bot.send_message(mensagem.chat.id,"Qual a descrição para essa Despesa?")
-            page = "home/despesa/conta/description"
+            bot.send_message(mensagem.chat.id,"Qual a descrição?")
+            page = "home/register/account/description"
             valor = mensagem.text
         else: 
             bot.reply_to(mensagem,"""Valor Não Aceito tente digitar valores ex: 1234,56""")
-            page = 'home/despesa/conta'
+            page = 'home/register/account'
 
 
 @bot.message_handler(func=despesa)
@@ -118,11 +121,11 @@ def despesa(mensagem) :
 ####################################
 def select_conta(mensagem) :
     global page,type,contas_list,conta
-    if  page =='home/despesa' :
+    if  page =='home/register' :
         contas = mensagem.text
         if contas in contas_list :
             print(contas_list)
-            page = 'home/despesa/conta'
+            page = 'home/register/account'
             conta = mensagem.text
             bot.reply_to(mensagem,"""Qual Valor?""")
         else:
@@ -131,14 +134,27 @@ def select_conta(mensagem) :
 @bot.message_handler(func=select_conta)   
 #####################################################################
 
-def registrar_despesa(mensagem) :
+def register_income(mensagem) :
+    global page,type
+    if mensagem.text == 'Registrar uma Receita' and page =='home' :
+        contas_keyboard()
+        bot.reply_to(mensagem,"""Escolha uma conta""",reply_markup = keyboard_contas)
+        page = 'home/register'
+        type = 'income'
+        
+@bot.message_handler(func=register_income)
+
+
+
+def register_expense(mensagem) :
     global page,type
     if mensagem.text == 'Registrar uma Despesa' and page =='home' :
         contas_keyboard()
         bot.reply_to(mensagem,"""Escolha uma conta""",reply_markup = keyboard_contas)
-        page = 'home/despesa'
+        page = 'home/register'
+        type = 'expense'
         
-@bot.message_handler(func=registrar_despesa)
+@bot.message_handler(func=register_expense)
 ###
 
     
