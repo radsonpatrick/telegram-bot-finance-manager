@@ -14,12 +14,6 @@ bot = telebot.TeleBot(os.environ['api_token'])
 ##keyboard
 
     
-keyboard_general = ReplyKeyboardMarkup(resize_keyboard = True, one_time_keyboard= True)\
-                                        .add(KeyboardButton('Registrar uma Despesa'))\
-                                        .add(KeyboardButton('Registrar uma Receita'))\
-                                        .add(KeyboardButton('Adicionar Conta'))\
-                                        .add(KeyboardButton('Contas'))\
-                                        .add(KeyboardButton('Voltar para o Inicio'))
 
 
 
@@ -65,6 +59,24 @@ def print_db(table,columns = '*') :
     print('-'*50)
     
 
+def keyboard_main() :
+    global contas 
+    contas = read_db('account','conta')
+    if len(contas) > 0 :
+        keyboard_general =  ReplyKeyboardMarkup(resize_keyboard = True, one_time_keyboard= True)\
+                                        .add(KeyboardButton('Registrar uma Despesa'))\
+                                        .add(KeyboardButton('Registrar uma Receita'))\
+                                        .add(KeyboardButton('Adicionar Conta'))\
+                                        .add(KeyboardButton('Contas'))\
+                                        .add(KeyboardButton('Voltar para o Inicio'))
+    else : 
+        keyboard_general =  ReplyKeyboardMarkup(resize_keyboard = True, one_time_keyboard= True)\
+                                        .add(KeyboardButton('Adicionar Conta'))\
+                                        .add(KeyboardButton('Ajuda'))
+    return keyboard_general 
+
+
+
 
 def validation_number(mensagem) :
     
@@ -85,7 +97,7 @@ def contas_keyboard() :
         contas_list.append(conta[0])
     print(contas_list)
 
-##################### Register ################################################
+#####################---Register income/expense----########################################
 
 def description_func(mensagem) :
     global page,description,valor,conta,type
@@ -103,7 +115,7 @@ def description_func(mensagem) :
 
 @bot.message_handler(func=description_func)
 
-#####################################################################
+####################################
 def despesa(mensagem) :
     global page,valor
     if page == 'home/register/account':
@@ -132,15 +144,19 @@ def select_conta(mensagem) :
             bot.reply_to(mensagem,"""Conta não reconhecida ! Selecione as opçoes no teclado""",reply_markup = keyboard_contas)
     
 @bot.message_handler(func=select_conta)   
-#####################################################################
+######################################
 
 def register_income(mensagem) :
-    global page,type
+    global page,type,contas
     if mensagem.text == 'Registrar uma Receita' and page =='home' :
         contas_keyboard()
-        bot.reply_to(mensagem,"""Escolha uma conta""",reply_markup = keyboard_contas)
-        page = 'home/register'
-        type = 'income'
+        if len(contas_list) >0 : 
+            bot.reply_to(mensagem,"""Escolha uma conta""",reply_markup = keyboard_contas)
+            page = 'home/register'
+            type = 'income'
+        else: 
+            bot.send_message(mensagem.chat.id,"""Nenhuma conta Registrada \n Crie uma conta antes de continuar""")
+            page = 'home'
         
 @bot.message_handler(func=register_income)
 
@@ -150,9 +166,13 @@ def register_expense(mensagem) :
     global page,type
     if mensagem.text == 'Registrar uma Despesa' and page =='home' :
         contas_keyboard()
-        bot.reply_to(mensagem,"""Escolha uma conta""",reply_markup = keyboard_contas)
-        page = 'home/register'
-        type = 'expense'
+        if len(contas_list) >0 : 
+            bot.reply_to(mensagem,"""Escolha uma conta""",reply_markup = keyboard_contas)
+            page = 'home/register'
+            type = 'expense'
+        else: 
+            bot.send_message(mensagem.chat.id,"""Nenhuma conta Registrada \n Crie uma conta antes de continuar""")
+            page = 'home'
         
 @bot.message_handler(func=register_expense)
 ###
@@ -230,7 +250,7 @@ def boas_vindas(mensagem) :
 
     bot.send_message(mensagem.chat.id, """Seja Bem vindo ao meu bot de finaças!
 para usa-lo pressione as opçoes abaixo
-para sair é so digitar /sair ou /exit""",reply_markup = keyboard_general)
+para sair é so digitar /sair ou /exit""",reply_markup = keyboard_main())
     
 
 
@@ -245,7 +265,7 @@ def message_general(mensagem):
 
 @bot.message_handler(func=message_general)
 def responder(mensagem) : 
-    bot.reply_to(mensagem,"""Para iniciar Selecione uma opçao abaixo""",reply_markup = keyboard_general)
+    bot.reply_to(mensagem,"""Para iniciar Selecione uma opçao abaixo""",reply_markup = keyboard_main())
     
 
 #####################################################################
